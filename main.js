@@ -1,29 +1,30 @@
+const express = require('express');
+const app = express();
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const helmet = require('helmet');
-
-const express = require('express');
+app.use(helmet());
 const session = require('express-session');
-const FileStore = require('session-file-store')(session);
-const app = express();
+const MySQLStore = require('express-mysql-session')(session);
+const flash = require('connect-flash');
 const port = 3000;
 
-app.use(helmet());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false}));
 app.use(compression());
+
+const mysqloption = require('./mysql-option');
 
 app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true,
-  store: new FileStore(),
-  cookie: {
-    httpOnly: true,
-    secure: false,
-  }
+  store: new MySQLStore(mysqloption)
 }));
+app.use(flash());
+
+const passport = require('./lib/passport')(app);
 
 app.get('*', function(request, response, next) {
   fs.readdir('./data', function(error, filelist){
@@ -34,7 +35,7 @@ app.get('*', function(request, response, next) {
 
 const topicRouter = require('./routes/topic');
 const indexRouter = require('./routes/index');
-const authRouter = require('./routes/auth');
+const authRouter = require('./routes/auth')(passport);
 
 app.use('/', indexRouter);
 app.use('/topic', topicRouter);

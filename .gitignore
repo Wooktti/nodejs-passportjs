@@ -3,3 +3,5 @@ sessions/
 data/
 nodejs/
 syntax/
+authData.js
+mysql-option.js
